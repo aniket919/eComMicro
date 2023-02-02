@@ -49,13 +49,9 @@ class ProductServiceApplicationTests {
 		
 		System.out.println("the product String : " + productRequestString);
 		
-		mockMvc.perform(
-							MockMvcRequestBuilders.post("/api/product/new")
-							.contentType(MediaType.APPLICATION_JSON)
-							.content(productRequestString)
-					).andExpect(
-									status().isCreated()
-								);
+		mockMvc.perform( 
+							MockMvcRequestBuilders.post("/api/product/new").contentType(MediaType.APPLICATION_JSON).content(productRequestString)
+						).andExpect(status().isCreated());
 		
 	}
 
