@@ -30,7 +30,7 @@ public class OrderService {
 	private OrderRepository orderRepository;
 	
 	@Autowired
-	private WebClient webClient;			// webClient default mode of communication : Async
+	private WebClient.Builder webClientBuilder;			// webClient default mode of communication : Async
 	
 	@Autowired
 	private RestTemplate restTemplate;
@@ -58,10 +58,11 @@ public class OrderService {
 		Map<String, Integer> itemAndQuantity = order.getOrderLineItemsList().stream()
 											.collect(Collectors.toMap(OrderLineItems::getSkuCode, OrderLineItems::getQuantity));
 		
-		// call inventory service, check if product is in stock, if yes then place order.
+		// call inventory service, check if product is in stock, if yes then place order. 
 		
-		InventoryResponse[] inventoryResponseArray = webClient.get()
-					.uri("http://localhost:8082/api/inventory/checkStock", UriBuilder -> UriBuilder.queryParam("skuCode", skuCodesList).build())
+		InventoryResponse[] inventoryResponseArray = webClientBuilder.build().get()
+		//			.uri("http://localhost:8082/api/inventory/checkStock", UriBuilder -> UriBuilder.queryParam("skuCode", skuCodesList).build())
+					.uri("http://inventory-service/api/inventory/checkStock", UriBuilder -> UriBuilder.queryParam("skuCode", skuCodesList).build())
 					.retrieve()
 					.bodyToMono(InventoryResponse[].class)
 					.block();
@@ -71,9 +72,11 @@ public class OrderService {
 		boolean allProductsInStock = Arrays.stream(inventoryResponseArray).allMatch(InventoryResponse::getIsInStock); //using method reference.
 		
 		if(allProductsInStock) {
+			
+			System.err.println("-----------------------called inventory service, placing order=========================");
 			orderRepository.save(order);
 			
-			updateQuantityForInventory(itemAndQuantity); // reduce quantity in inventory after placing orders.
+	//		updateQuantityForInventory(itemAndQuantity); // reduce quantity in inventory after placing orders.
 			
 		}else {
 			throw new IllegalArgumentException("Product is not in stock!");
@@ -86,7 +89,7 @@ public class OrderService {
 	//	ResponseEntity quantityReponse = restTemplate.postForEntity("http://localhost:8082/api/inventory/updateQuantityInventory", itemAndQuantity, ResponseEntity.class);
 		
 		@SuppressWarnings("rawtypes")
-		ResponseEntity quantityReponse = webClient.get()
+		ResponseEntity quantityReponse = webClientBuilder.build().get()
 											.uri("http://localhost:8082/api/inventory/updateQuantityInventory", UriBuilder -> UriBuilder.queryParam("itemAndQuantity", itemAndQuantity).build())
 											.retrieve()
 											.bodyToMono(ResponseEntity.class)
