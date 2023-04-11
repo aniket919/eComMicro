@@ -12,7 +12,10 @@ import com.explore.inventorymicro.dto.InventoryResponse;
 import com.explore.inventorymicro.model.Inventory;
 import com.explore.inventorymicro.repository.InventoryRepository;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class InventoryService {
 
 	@Autowired
@@ -21,6 +24,20 @@ public class InventoryService {
 	
 	@Transactional(readOnly = true)
 	public List<InventoryResponse> isInStock(List<String> skuCode) {
+		
+// Following block of code was written to introduce a manual timeout to simulate 
+// the scenario of application running slow, (In real there can be any no. of reasons) 
+// And test out circuitbreaker implementations of handling situations like - request time out, retry mechanism, destination service is down etc.
+		
+//		log.info("wait started");
+//		
+//		try {
+//			Thread.sleep(20000);
+//		} catch (InterruptedException e) {
+//			e.printStackTrace();
+//		}
+//		log.info("wait over");
+		
 		
 		return invRepo.findBySkuCodeIn(skuCode).stream()
 												.map(inventory -> 
